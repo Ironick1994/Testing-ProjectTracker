@@ -1,0 +1,47 @@
+name: MS Project -> Quote & Scope Tracker
+
+on:
+  # Fires when the .mpp is pushed (only useful if this workflow lives in the .mpp's repo)
+  push:
+    paths:
+      - "*.mpp"
+      - "**/*.mpp"
+  # Fallback poll for when this workflow lives in a separate repo.
+  # Hourly, weekdays, 12:00-23:00 UTC. Delete this block if the push trigger covers you.
+  schedule:
+    - cron: "0 12-23 * * 1-5"
+  # Run button in the Actions tab
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this repo (contains the script)
+        uses: actions/checkout@v4
+
+      - name: Check out the schedule repo (only if MPP_REPO is set)
+        if: ${{ vars.MPP_REPO != '' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.MPP_REPO }}
+          token: ${{ secrets.MPP_REPO_TOKEN }}
+          path: mpp-src
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install mpxj JPype1 google-api-python-client google-auth
+
+      - name: Parse .mpp and write MSP_Raw
+        env:
+          GOOGLE_SA_KEY: ${{ secrets.GOOGLE_SA_KEY }}
+          MPP_FILE: ${{ vars.MPP_REPO != '' && format('mpp-src/{0}', vars.MPP_PATH) || vars.MPP_PATH }}
+        run: python scripts/msp_to_sheet.py
