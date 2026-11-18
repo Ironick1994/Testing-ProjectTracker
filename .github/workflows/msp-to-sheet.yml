@@ -1,16 +1,12 @@
 name: MS Project -> Quote & Scope Tracker
 
 on:
-  # Fires when the .mpp is pushed (only useful if this workflow lives in the .mpp's repo)
   push:
     paths:
       - "*.mpp"
       - "**/*.mpp"
-  # Fallback poll for when this workflow lives in a separate repo.
-  # Hourly, weekdays, 12:00-23:00 UTC. Delete this block if the push trigger covers you.
   schedule:
     - cron: "0 12-23 * * 1-5"
-  # Run button in the Actions tab
   workflow_dispatch:
 
 jobs:
